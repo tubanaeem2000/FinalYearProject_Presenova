@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: fyp-presenova
+    name: finalyearproject-presenova
     runtime: python
     region: oregon
     plan: free
