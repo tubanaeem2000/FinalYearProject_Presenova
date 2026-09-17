@@ -11,6 +11,11 @@ services:
         value: production
       - key: FLASK_DEBUG
         value: "0"
+      # Pin explicitly: Render doesn't reliably honor runtime.txt anymore,
+      # and an unpinned/newer Python was resolving faiss-cpu==1.9.0 to "no
+      # matching distribution" since that exact version has no wheel for it.
+      - key: PYTHON_VERSION
+        value: "3.11.9"
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: FIREBASE_PROJECT_ID
@@ -23,8 +28,11 @@ services:
         sync: false
       - key: ALLOW_VERCEL_PREVIEWS
         value: "true"
+      # Frontend is deployed on Firebase Hosting (presenova-fyp project),
+      # not Vercel — both Hosting domain forms are included since Firebase
+      # serves either depending on how the site is set up.
       - key: CORS_ORIGINS
-        value: "http://localhost:3000,http://localhost:5173,https://presenova.vercel.app"
+        value: "http://localhost:3000,http://localhost:5173,https://presenova-fyp.web.app,https://presenova-fyp.firebaseapp.com"
       - key: ENABLE_GRAMMAR_CHECK
         value: "1"
       - key: LANGUAGETOOL_API_URL
