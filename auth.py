@@ -292,7 +292,7 @@ def firebase_login():
         except Exception:
             pass
 
-        token_aud = unverified_claims.get('aud') or os.getenv('FIREBASE_PROJECT_ID', 'fyp-firebase-df1f6')
+        token_aud = unverified_claims.get('aud') or os.getenv('FIREBASE_PROJECT_ID', 'presenova-fyp')
 
         try:
             import firebase_admin

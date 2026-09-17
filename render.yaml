@@ -14,7 +14,7 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: FIREBASE_PROJECT_ID
-        value: "fyp-firebase-df1f6"
+        value: "presenova-fyp"
       - key: FIREBASE_CREDENTIALS_JSON
         sync: false   # Paste your Firebase service account JSON here in Render dashboard
       - key: GEMINI_API_KEY

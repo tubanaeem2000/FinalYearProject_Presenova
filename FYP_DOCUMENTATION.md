@@ -329,7 +329,7 @@ JWT_SECRET_KEY=YOUR_GENERATED_JWT_SECRET_KEY_HERE
 
 # Firebase Authentication & Firestore Credentials
 FIREBASE_CREDENTIALS_PATH=firebase-service-account.json
-FIREBASE_PROJECT_ID=fyp-integration-c620f
+FIREBASE_PROJECT_ID=presenova-fyp
 FIREBASE_WEB_API_KEY=your-firebase-web-api-key
 GOOGLE_OAUTH_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
 
