@@ -267,33 +267,149 @@
 }
 
 /* COUNT BUTTONS */
+/* COUNT BUTTONS */
 .pg-count-group {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .pg-count-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .pg-count-btn {
-  flex: 1;
-  min-width: 90px;
-  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.85rem 0.5rem;
   background: #0f172a;
   border: 1px solid #334155;
-  border-radius: 0.5rem;
+  border-radius: 0.65rem;
   color: #cbd5e1;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .pg-count-btn:hover {
   border-color: #475569;
+  transform: translateY(-2px);
 }
 
 .pg-count-btn.active {
   background: rgba(56, 189, 248, 0.15);
   border-color: #38bdf8;
   color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+}
+
+.pg-count-btn-pro {
+  border-color: rgba(234, 179, 8, 0.4);
+}
+
+.pg-count-btn-pro:hover {
+  border-color: #eab308;
+}
+
+.pg-count-btn-pro.active {
+  background: rgba(234, 179, 8, 0.15);
+  border-color: #eab308;
+  color: #facc15;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.25);
+}
+
+.pg-count-num {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.pg-badge-free {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+}
+
+.pg-badge-pro {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+}
+
+.pg-badge-pro.locked {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.25));
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  box-shadow: 0 0 8px rgba(234, 179, 8, 0.2);
+}
+
+.pg-badge-pro.unlocked {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid #38bdf8;
+}
+
+.pg-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.pg-plan-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.35rem;
+  background: rgba(30, 41, 59, 0.7);
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+
+.pg-plan-tag.pro {
+  background: rgba(234, 179, 8, 0.15);
+  color: #facc15;
+  border-color: rgba(234, 179, 8, 0.4);
+}
+
+.pg-slide-tier-hint {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pg-unlock-link {
+  background: none;
+  border: none;
+  color: #facc15;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.pg-unlock-link:hover {
+  color: #fef08a;
 }
 
 /* BUTTONS */
@@ -843,5 +959,168 @@
 .pg-loading-text {
   font-size: 1.05rem;
   font-weight: 700;
+  color: #f8fafc;
+}
+
+/* PRO UPGRADE MODAL */
+.pg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 10000;
+  animation: pg-fade-in 0.2s ease-out;
+}
+
+.pg-upgrade-modal {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(234, 179, 8, 0.15);
+  border-radius: 1.25rem;
+  max-width: 500px;
+  width: 100%;
+  padding: 2rem;
+  color: #f8fafc;
+  position: relative;
+  text-align: center;
+  animation: pg-modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pg-modal-pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.pg-modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.pg-modal-close-btn:hover {
+  color: #f8fafc;
+}
+
+.pg-modal-icon-wrap {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.3));
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 25px rgba(234, 179, 8, 0.3);
+}
+
+.pg-modal-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 0.5rem;
+}
+
+.pg-modal-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.2rem 0.75rem;
+  background: rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  color: #fde047;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.pg-modal-desc {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.pg-modal-features {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  margin-bottom: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pg-modal-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+}
+
+.pg-modal-feature-item span.icon {
+  color: #34d399;
+  font-weight: bold;
+}
+
+.pg-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pg-btn-pro-unlock {
+  background: linear-gradient(135deg, #eab308 0%, #f59e0b 100%);
+  color: #0f172a;
+  border: none;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 0.9rem 1.5rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.35);
+}
+
+.pg-btn-pro-unlock:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.5);
+  background: linear-gradient(135deg, #facc15 0%, #fbbf24 100%);
+}
+
+.pg-btn-stay-free {
+  background: rgba(30, 41, 59, 0.8);
+  color: #94a3b8;
+  border: 1px solid #334155;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pg-btn-stay-free:hover {
+  background: #334155;
   color: #f8fafc;
 }

@@ -645,7 +645,7 @@ def generate_presentation_outline(
     Generates a structured, multi-archetype presentation outline.
     Prefers Gemini 3.6 Flash for deep domain content; falls back to enriched local generator.
     """
-    slide_count = max(3, min(15, int(slide_count)))
+    slide_count = max(3, min(20, int(slide_count)))
 
     # 1. Try Gemini 3.6 Flash if no offline force flag
     offline = os.getenv('FORCE_OFFLINE_MODE', '0').strip().lower() in {'1', 'true', 'yes', 'on'}

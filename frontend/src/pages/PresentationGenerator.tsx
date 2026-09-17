@@ -12,7 +12,18 @@ import {
 } from '../services/presentationGeneratorApi';
 import './PresentationGenerator.css';
 
-const SLIDE_COUNTS = [5, 8, 10, 12];
+interface SlideCountOption {
+  count: number;
+  label: string;
+  isPaid?: boolean;
+}
+
+const SLIDE_COUNTS: SlideCountOption[] = [
+  { count: 5, label: '5 Slides' },
+  { count: 10, label: '10 Slides' },
+  { count: 15, label: '15 Slides' },
+  { count: 20, label: '20 Slides', isPaid: true },
+];
 const TONES = [
   { id: 'Professional', label: '🎯 Professional' },
   { id: 'Educational', label: '🎓 Educational' },
@@ -76,6 +87,38 @@ const PresentationGenerator: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PresentationGenResponse | null>(null);
 
+  // User plan state (Free trial vs Pro)
+  const [isProUser, setIsProUser] = useState<boolean>(() => {
+    return localStorage.getItem('presenova_user_plan') === 'pro';
+  });
+  const [showUpgradeModal, setShowUpgradeModal] = useState<boolean>(false);
+  const [upgradeToast, setUpgradeToast] = useState<string | null>(null);
+
+  const handleSelectSlideCount = (opt: SlideCountOption) => {
+    if (opt.isPaid && !isProUser) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setSlideCount(opt.count);
+  };
+
+  const handleActivatePro = () => {
+    localStorage.setItem('presenova_user_plan', 'pro');
+    setIsProUser(true);
+    setSlideCount(20);
+    setShowUpgradeModal(false);
+    setUpgradeToast('👑 Presenova Pro Activated! 20 Slides unlocked.');
+    setTimeout(() => setUpgradeToast(null), 5000);
+  };
+
+  const handleDowngradeToFree = () => {
+    localStorage.removeItem('presenova_user_plan');
+    setIsProUser(false);
+    if (slideCount > 15) setSlideCount(15);
+    setUpgradeToast('Switched back to Free Trial (Up to 15 Slides).');
+    setTimeout(() => setUpgradeToast(null), 4000);
+  };
+
   // 1. Fetch Outline from Prompt or File Seed (Step 1 -> Step 2)
   const handleProceedToOutline = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -86,6 +129,11 @@ const PresentationGenerator: React.FC = () => {
     }
     if (inputMode === 'document' && !seedFile) {
       setError('Please select or drag-and-drop a document (.pdf, .docx, .pptx).');
+      return;
+    }
+
+    if (slideCount > 15 && !isProUser) {
+      setShowUpgradeModal(true);
       return;
     }
 
@@ -361,19 +409,80 @@ const PresentationGenerator: React.FC = () => {
 
             {/* Slide Count Selection */}
             <div className="pg-field">
-              <label className="pg-label">Target Slide Count</label>
+              <div className="pg-label-row">
+                <label className="pg-label">Target Slide Count</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span className={`pg-plan-tag ${isProUser ? 'pro' : ''}`}>
+                    {isProUser ? '👑 Pro Plan Active (20 Slides Unlocked)' : '🎁 Free Trial (Up to 15 Slides)'}
+                  </span>
+                  {isProUser && (
+                    <button
+                      type="button"
+                      onClick={handleDowngradeToFree}
+                      style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                      title="Switch back to Free Trial for testing"
+                    >
+                      (Reset to Free)
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {upgradeToast && (
+                <div style={{
+                  background: 'rgba(234, 179, 8, 0.15)',
+                  border: '1px solid rgba(234, 179, 8, 0.4)',
+                  color: '#facc15',
+                  padding: '0.5rem 0.85rem',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.65rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  {upgradeToast}
+                </div>
+              )}
+
               <div className="pg-count-group">
-                {SLIDE_COUNTS.map((count) => (
+                {SLIDE_COUNTS.map((opt) => {
+                  const isSelected = slideCount === opt.count;
+                  return (
+                    <button
+                      key={opt.count}
+                      type="button"
+                      className={`pg-count-btn ${isSelected ? 'active' : ''} ${opt.isPaid ? 'pg-count-btn-pro' : ''}`}
+                      onClick={() => handleSelectSlideCount(opt)}
+                      disabled={loading}
+                      title={opt.isPaid && !isProUser ? '20 Slides requires Pro Plan' : `${opt.count} Slides`}
+                    >
+                      <span className="pg-count-num">{opt.count} Slides</span>
+                      {opt.isPaid ? (
+                        <span className={`pg-badge-pro ${isProUser ? 'unlocked' : 'locked'}`}>
+                          {isProUser ? 'PRO UNLOCKED' : 'PAID 👑'}
+                        </span>
+                      ) : (
+                        <span className="pg-badge-free">FREE</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="pg-slide-tier-hint">
+                <span>
+                  🎁 <strong>Free Trial:</strong> generate up to <strong>15 slides</strong>. <strong>20 Slides</strong> is a Paid feature.
+                </span>
+                {!isProUser && (
                   <button
-                    key={count}
                     type="button"
-                    className={`pg-count-btn ${slideCount === count ? 'active' : ''}`}
-                    onClick={() => setSlideCount(count)}
-                    disabled={loading}
+                    className="pg-unlock-link"
+                    onClick={() => setShowUpgradeModal(true)}
                   >
-                    {count} Slides
+                    Unlock 20 Slides 👑
                   </button>
-                ))}
+                )}
               </div>
             </div>
 
@@ -769,6 +878,65 @@ const PresentationGenerator: React.FC = () => {
         <div className="pg-loading-overlay">
           <div className="pg-spinner" />
           <div className="pg-loading-text">{loadingMessage || 'Processing...'}</div>
+        </div>
+      )}
+
+      {/* PRO UPGRADE MODAL */}
+      {showUpgradeModal && (
+        <div className="pg-modal-overlay" onClick={() => setShowUpgradeModal(false)}>
+          <div className="pg-upgrade-modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="pg-modal-close-btn"
+              onClick={() => setShowUpgradeModal(false)}
+            >
+              ×
+            </button>
+            <div className="pg-modal-icon-wrap">
+              👑
+            </div>
+            <span className="pg-modal-badge">PAID FEATURE</span>
+            <h3 className="pg-modal-title">Unlock 20-Slide Presentations</h3>
+            <p className="pg-modal-desc">
+              Your <strong>Free Trial</strong> allows you to generate up to <strong>15 slides</strong> per presentation. 
+              Comprehensive <strong>20-slide deep-dive decks</strong> require a Presenova Pro plan.
+            </p>
+
+            <div className="pg-modal-features">
+              <div className="pg-modal-feature-item">
+                <span className="icon">✓</span>
+                <span>Generate full 20-slide comprehensive decks</span>
+              </div>
+              <div className="pg-modal-feature-item">
+                <span className="icon">✓</span>
+                <span>Rich multi-archetype layouts (SWOT, Chevrons, Dials, KPIs)</span>
+              </div>
+              <div className="pg-modal-feature-item">
+                <span className="icon">✓</span>
+                <span>Deep domain synthesis with Gemini AI</span>
+              </div>
+            </div>
+
+            <div className="pg-modal-actions">
+              <button
+                type="button"
+                className="pg-btn-pro-unlock"
+                onClick={handleActivatePro}
+              >
+                👑 Upgrade to Pro (Activate 20 Slides)
+              </button>
+              <button
+                type="button"
+                className="pg-btn-stay-free"
+                onClick={() => {
+                  setSlideCount(15);
+                  setShowUpgradeModal(false);
+                }}
+              >
+                Continue with 15 Slides (Free Trial)
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

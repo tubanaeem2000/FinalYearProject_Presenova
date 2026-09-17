@@ -263,23 +263,37 @@ class GeminiProvider(AIProvider):
         system_instruction: Optional[str] = None,
     ) -> str:
         """Use the current google.genai SDK."""
+        # Build configuration; suppress thinking tokens so max_output_tokens is spent on the response
+        try:
+            from google.genai import types
+            config_kwargs = {
+                "temperature": temperature,
+                "max_output_tokens": max(max_output_tokens, 512),
+            }
+            if system_instruction:
+                config_kwargs["system_instruction"] = system_instruction
+            if "lite" not in model_name.lower():
+                config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+            config = types.GenerateContentConfig(**config_kwargs)
+        except Exception:
+            config = {
+                "temperature": temperature,
+                "max_output_tokens": max(max_output_tokens, 512),
+            }
+            if system_instruction:
+                config["system_instruction"] = system_instruction
+
+        actual_model = f"models/{model_name}" if not model_name.startswith("models/") else model_name
         with ThreadPoolExecutor(max_workers=1) as pool:
             future = pool.submit(
                 self._new_client.models.generate_content,
-                model=f"models/{model_name}",
+                model=actual_model,
                 contents=prompt,
-                config={
-                    "temperature": temperature,
-                    "max_output_tokens": max_output_tokens,
-                } if not system_instruction else {
-                    "temperature": temperature,
-                    "max_output_tokens": max_output_tokens,
-                    "system_instruction": system_instruction,
-                },
+                config=config,
             )
             try:
                 response = future.result(timeout=self.timeout_seconds)
-                return response.text if hasattr(response, 'text') else str(response)
+                return response.text if hasattr(response, 'text') and response.text else str(response)
             except FutureTimeout:
                 raise TimeoutError(f"Gemini {model_name} timed out after {self.timeout_seconds}s.")
 

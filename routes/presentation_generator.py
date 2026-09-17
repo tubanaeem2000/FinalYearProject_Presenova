@@ -27,7 +27,7 @@ from services.text_extractor import get_extension, is_allowed_for_analysis
 logger = logging.getLogger(__name__)
 
 
-def _safe_int(value, default: int = 6, min_val: int = 3, max_val: int = 15) -> int:
+def _safe_int(value, default: int = 6, min_val: int = 3, max_val: int = 20) -> int:
     """Safely parse an integer from user input, returning default on failure.
 
     AUDIT-05: Bare int() casts on request parameters raise ValueError on non-numeric
