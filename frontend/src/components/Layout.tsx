@@ -78,16 +78,16 @@ const Layout: React.FC = () => {
                 Download App
               </NavLink>
             </li>
-
-            <li className="nav-item user-info-item">
-              <Link to="/analytics" className="user-name">
-                {user?.name}
-              </Link>
-              <button onClick={logout} className="logout-btn">
-                Logout
-              </button>
-            </li>
           </ul>
+
+          <div className="navbar-actions">
+            <Link to="/analytics" className="user-name">
+              {user?.name}
+            </Link>
+            <button onClick={logout} className="logout-btn">
+              Logout
+            </button>
+          </div>
         </div>
       </nav>
 

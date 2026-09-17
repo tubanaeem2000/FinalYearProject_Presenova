@@ -45,6 +45,7 @@ const LiveCoach: React.FC = () => {
     historySummary,
     finalReport,
     error,
+    sttAvailable,
     startSession,
     sendAnswer,
     stopSession,
@@ -177,6 +178,11 @@ const LiveCoach: React.FC = () => {
               {error && (
                 <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', color: '#fca5a5', padding: '10px 14px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px', width: '100%', gridColumn: '1 / -1' }}>
                   <strong>⚠️ Session Error:</strong> {error}
+                </div>
+              )}
+              {!sttAvailable && (
+                <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', color: '#fbbf24', padding: '10px 14px', borderRadius: '8px', marginBottom: '12px', fontSize: '14px', width: '100%', gridColumn: '1 / -1' }}>
+                  <strong>🎤 Voice scoring unavailable:</strong> Speech-to-text isn't configured on the server, so Speaking Pace, Filler Words, and Vocal Pitch Dynamics won't be tracked this session (they'll show 0, not a reflection of your delivery). Eye Contact, Posture, and Confidence are unaffected.
                 </div>
               )}
               <div className="arena-left-pane">

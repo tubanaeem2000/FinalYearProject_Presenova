@@ -47,6 +47,10 @@ interface ReportDashboardProps {
       interruptions_handled: number;
       avg_confidence?: number;
       avg_vocal_pitch?: number;
+      data_quality?: {
+        has_audio_metrics: boolean;
+        has_video_metrics: boolean;
+      };
     };
   };
   onReset: () => void;
@@ -171,18 +175,29 @@ const ReportDashboard: React.FC<ReportDashboardProps> = ({ report, onReset, rese
             </div>
             <div className="telemetry-item">
               <span className="tel-label">Vocal Pitch Dynamics</span>
-              <span className="tel-val">{metrics.avg_vocal_pitch ?? 0}%</span>
+              <span className="tel-val">
+                {metrics.data_quality && !metrics.data_quality.has_audio_metrics ? 'N/A' : `${metrics.avg_vocal_pitch ?? 0}%`}
+              </span>
             </div>
             <div className="telemetry-item">
               <span className="tel-label">Avg Speaking Pace</span>
-              <span className="tel-val">{metrics.avg_wpm ?? 0} WPM</span>
+              <span className="tel-val">
+                {metrics.data_quality && !metrics.data_quality.has_audio_metrics ? 'N/A' : `${metrics.avg_wpm ?? 0} WPM`}
+              </span>
             </div>
             <div className="telemetry-item">
               <span className="tel-label">Fillers Detected</span>
               <span className={`tel-val ${(metrics.total_fillers ?? 0) > 5 ? 'text-red' : ''}`}>
-                {metrics.total_fillers ?? 0}
+                {metrics.data_quality && !metrics.data_quality.has_audio_metrics ? 'N/A' : (metrics.total_fillers ?? 0)}
               </span>
             </div>
+            {metrics.data_quality && !metrics.data_quality.has_audio_metrics && (
+              <div className="telemetry-item" style={{ gridColumn: '1 / -1' }}>
+                <span style={{ fontSize: '0.75rem', color: '#fbbf24' }}>
+                  🎤 Voice metrics show N/A — speech-to-text wasn't configured, so no audio was scored this session.
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

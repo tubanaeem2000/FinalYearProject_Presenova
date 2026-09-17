@@ -36,6 +36,10 @@ export const useLiveSession = ({ userId, videoRef }: UseLiveSessionProps) => {
   const [historySummary, setHistorySummary] = useState<any>(null);
   const [finalReport, setFinalReport] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  // FIX: true until the backend tells us otherwise, so we don't flash a
+  // warning before session_started arrives. Reflects whether GROQ_API_KEY is
+  // configured server-side (speech-to-text availability for WPM/fillers/pitch).
+  const [sttAvailable, setSttAvailable] = useState(true);
 
   const socketRef = useRef<Socket | null>(null);
   const videoIntervalRef = useRef<any>(null);
@@ -67,6 +71,7 @@ export const useLiveSession = ({ userId, videoRef }: UseLiveSessionProps) => {
         setSessionId(data.session_id);
         setHasHistory(data.has_history);
         setHistorySummary(data.history_summary);
+        setSttAvailable(data.stt_available !== false);
         setStatus('STREAMING');
       } else {
         setError('Failed to start session');
@@ -277,6 +282,7 @@ export const useLiveSession = ({ userId, videoRef }: UseLiveSessionProps) => {
     historySummary,
     finalReport,
     error,
+    sttAvailable,
     startSession,
     sendAnswer,
     stopSession,

@@ -499,21 +499,25 @@ def _analyze_frame_with_mediapipe(img, session=None):
     head_yaw_dev = abs(point(1)[0] - eye_center_x) / eye_span
     head_pitch_dev = abs((point(1)[1] - eye_center_y) / face_len - 0.55)
 
-    # Strict Eye Contact Check: If eyes are closed, looking down at screen/desk, or head turned away:
-    is_looking_away = (
-        avg_ear < 0.16 or
-        left_v_ratio > 0.56 or right_v_ratio > 0.56 or
-        gaze_v_dev > 0.14 or gaze_h_dev > 0.12 or
-        head_yaw_dev > 0.14 or head_pitch_dev > 0.16
-    )
+    # FIX: The previous version used a binary "is_looking_away" gate that snapped
+    # eye_contact_score straight to 0 the instant ANY one of six tight thresholds
+    # (e.g. vertical iris ratio > 0.56) was crossed. On a typical laptop webcam
+    # — mounted above the screen, a few inches from the content the user is
+    # actually reading — normal screen-viewing gaze routinely exceeds those
+    # thresholds even while genuinely paying attention, so the score pinned to
+    # 0% almost permanently. Only fully closed eyes are a hard 0 now; gaze and
+    # head-angle deviation instead degrade the score continuously (same
+    # weighted-penalty style as the posture score below), with a wider
+    # tolerance band before penalties kick in.
+    eyes_closed = avg_ear < 0.16
 
-    if is_looking_away:
+    if eyes_closed:
         eye_contact_score = 0
     else:
-        total_dev = (gaze_h_dev * 3.5) + (gaze_v_dev * 4.5) + (head_yaw_dev * 2.5) + (head_pitch_dev * 2.5)
-        eye_contact_score = _clip_score(100 - (total_dev * 200), 0, 100)
-        if total_dev > 0.28:
-            eye_contact_score = max(0, eye_contact_score - 30)
+        total_dev = (gaze_h_dev * 1.8) + (gaze_v_dev * 2.0) + (head_yaw_dev * 1.5) + (head_pitch_dev * 1.5)
+        eye_contact_score = _clip_score(100 - (total_dev * 110), 0, 100)
+        if total_dev > 0.55:
+            eye_contact_score = max(0, eye_contact_score - 20)
 
     ideal_cx = w / 2
     ideal_cy = h * 0.42
@@ -990,7 +994,12 @@ def init_socketio_events(socketio):
             "status": "success",
             "session_id": session.id,
             "has_history": has_history,
-            "history_summary": history_summary
+            "history_summary": history_summary,
+            # FIX: without a configured GROQ_API_KEY, audio chunks never get a
+            # transcript, so WPM/fillers/vocal pitch silently stay at 0 forever
+            # with no visible difference from "flawless delivery". Surface the
+            # real cause up front instead of a misleading zero.
+            "stt_available": groq_client is not None
         }, room=request.sid, namespace='/ws/live-session')
 
     @socketio.on('video_frame', namespace='/ws/live-session')

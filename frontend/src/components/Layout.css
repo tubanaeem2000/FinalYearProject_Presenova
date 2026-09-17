@@ -25,10 +25,19 @@
 .navbar-container {
   max-width: 1280px;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
+  /* FIX: was `display:flex; justify-content:space-between` with only two
+     children (logo, nav-links) — the logout button and username lived
+     inside the same nav-links <ul> as its last <li>, so the whole links+user
+     block was one flex item that got shoved flush to the right, leaving a
+     lopsided gap after the logo instead of the links being centered. Now
+     the markup has three real sections (logo / nav-links / actions) laid
+     out on a grid so the center column is genuinely centered against the
+     full bar width, independent of how wide the outer two columns are. */
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  padding: 1.1rem 2rem;
+  gap: 0.75rem;
+  padding: 1.1rem 1.5rem;
   width: 100%;
 }
 
@@ -36,7 +45,7 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 800;
   background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
@@ -56,20 +65,35 @@
 .nav-links {
   display: flex;
   list-style: none;
-  gap: 0.8rem;
+  gap: 0.15rem;
   align-items: center;
+  justify-content: center;
+  /* FIX: keep the whole bar on a single row at all desktop widths — never
+     wrap to a second line. flex-wrap stays nowrap and, if the viewport is
+     ever too narrow for every item at minimum size, the row scrolls
+     horizontally instead of breaking (scrollbar hidden for a clean look). */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  min-width: 0;
+}
+
+.nav-links::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-item {
   position: relative;
+  flex: 0 0 auto;
 }
 
 .nav-link {
   color: #94a3b8; /* Slate 400 */
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 99px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
@@ -118,6 +142,9 @@
 /* Responsive Media Queries */
 @media (max-width: 768px) {
   .navbar-container {
+    /* Grid's 3-column layout doesn't make sense stacked on mobile; fall
+       back to a centered flex column like before. */
+    display: flex;
     flex-direction: column;
     gap: 1.2rem;
     padding: 1.2rem 1rem;
@@ -127,6 +154,11 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.8rem;
+  }
+
+  .navbar-actions {
+    border-left: none;
+    padding-left: 0;
   }
 
   .nav-link {
@@ -140,24 +172,25 @@
   }
 }
 
-/* User Info and Logout in navbar */
-.user-info-item {
+/* User Info and Logout in navbar (right-hand grid column) */
+.navbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding-left: 0.8rem;
+  gap: 0.5rem;
+  padding-left: 0.6rem;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 0 0 auto;
 }
 
 .user-name {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #f8fafc;
   background: rgba(255, 255, 255, 0.04);
-  padding: 0.4rem 0.8rem;
+  padding: 0.35rem 0.65rem;
   border-radius: 99px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  max-width: 140px;
+  max-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -193,13 +226,14 @@
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   border: none;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  padding: 0.4rem 0.9rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 99px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
