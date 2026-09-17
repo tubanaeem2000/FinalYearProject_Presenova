@@ -148,8 +148,18 @@ def create_app():
     # ===== CREATE FLASK APP =====
     app = Flask(__name__)
 
-    # Pre-warm ML models in background thread so server starts instantly
-    threading.Thread(target=prewarm_ml_models, daemon=True).start()
+    # Pre-warm ML models in background thread so server starts instantly.
+    # FIX: measured locally, loading sentence-transformers (torch) + spaCy +
+    # mediapipe + opencv + scikit-learn pushes resident memory past 500MB
+    # within ~40s of boot. Render's free tier caps the instance at 512MB —
+    # the container gets OOM-killed as this finishes loading, which the
+    # proxy surfaces to users as a 502. Default stays on for local dev;
+    # set PREWARM_ML_MODELS=0 on memory-constrained deploys so the app
+    # boots lean and each model loads lazily on first actual use instead.
+    if os.getenv('PREWARM_ML_MODELS', '1').strip().lower() not in {'0', 'false', 'no', 'off'}:
+        threading.Thread(target=prewarm_ml_models, daemon=True).start()
+    else:
+        logger.info("[PERF] ML model pre-warming disabled (PREWARM_ML_MODELS=0); models load lazily on first use.")
 
     # Start TTL purge worker for generated files and uploads
     _start_pptx_purge_worker()

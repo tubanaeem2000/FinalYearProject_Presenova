@@ -16,6 +16,13 @@ services:
       # matching distribution" since that exact version has no wheel for it.
       - key: PYTHON_VERSION
         value: "3.11.9"
+      # FIX: eager startup pre-warm (sentence-transformers/torch + spaCy +
+      # mediapipe + opencv) measured at 500MB+ resident memory within ~40s
+      # of boot — exceeds the free plan's 512MB limit and gets OOM-killed,
+      # which surfaces to users as a 502. Disabled here; models load lazily
+      # on first actual use instead.
+      - key: PREWARM_ML_MODELS
+        value: "0"
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: FIREBASE_PROJECT_ID
