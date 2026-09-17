@@ -151,12 +151,17 @@ def create_app():
     # Pre-warm ML models in background thread so server starts instantly.
     # FIX: measured locally, loading sentence-transformers (torch) + spaCy +
     # mediapipe + opencv + scikit-learn pushes resident memory past 500MB
-    # within ~40s of boot. Render's free tier caps the instance at 512MB —
-    # the container gets OOM-killed as this finishes loading, which the
-    # proxy surfaces to users as a 502. Default stays on for local dev;
-    # set PREWARM_ML_MODELS=0 on memory-constrained deploys so the app
-    # boots lean and each model loads lazily on first actual use instead.
-    if os.getenv('PREWARM_ML_MODELS', '1').strip().lower() not in {'0', 'false', 'no', 'off'}:
+    # within ~40s of boot — gunicorn logs "Listening" immediately (app
+    # object returns fast), then the container gets OOM-killed once the
+    # background thread finishes loading, past that point. Render's free
+    # plan caps the instance at 512MB, so every request 502s once the
+    # process is dead, even though the boot log looked healthy.
+    # Default is OFF (opt-in) rather than on-by-default-with-opt-out:
+    # this project's Render service does not reliably sync env vars from
+    # render.yaml into the dashboard, so a safe default must not depend on
+    # any env var being set at all. Set PREWARM_ML_MODELS=1 locally (or
+    # anywhere with enough headroom) for instant-warm first requests.
+    if os.getenv('PREWARM_ML_MODELS', '0').strip().lower() not in {'0', 'false', 'no', 'off'}:
         threading.Thread(target=prewarm_ml_models, daemon=True).start()
     else:
         logger.info("[PERF] ML model pre-warming disabled (PREWARM_ML_MODELS=0); models load lazily on first use.")
