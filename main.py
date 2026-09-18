@@ -184,12 +184,26 @@ def create_app():
     jwt = JWTManager(app)
 
     # ===== CORS CONFIGURATION =====
-    DEFAULT_ALLOWED_ORIGINS = ['http://localhost:3000', 'http://localhost:5173']
+    # FIX: previously, setting CORS_ORIGINS fully REPLACED this list rather
+    # than adding to it, and this project's Render service has repeatedly
+    # not applied dashboard env var changes reliably (confirmed: the deployed
+    # backend returned zero Access-Control-Allow-Origin headers for the live
+    # Firebase Hosting origin even after CORS_ORIGINS was added on Render).
+    # The actual deployed frontends must always work regardless of Render
+    # dashboard state, so they're hardcoded as a baseline here and merged
+    # with (not replaced by) whatever CORS_ORIGINS additionally provides.
+    ALWAYS_ALLOWED_ORIGINS = [
+        'https://presenova-fyp.web.app',
+        'https://presenova-fyp.firebaseapp.com',
+        'http://localhost:3000',
+        'http://localhost:5173',
+    ]
     cors_origins_env = os.getenv('CORS_ORIGINS', '').strip()
+    extra_origins = []
     if cors_origins_env and cors_origins_env != '*':
-        parsed_origins = [o.strip() for o in cors_origins_env.split(',') if o.strip()]
-    else:
-        parsed_origins = list(DEFAULT_ALLOWED_ORIGINS)
+        extra_origins = [o.strip() for o in cors_origins_env.split(',') if o.strip()]
+    # De-dupe while preserving order (dict.fromkeys keeps first occurrence).
+    parsed_origins = list(dict.fromkeys(ALWAYS_ALLOWED_ORIGINS + extra_origins))
 
     # AUDIT-09: Allow dynamic Vercel preview deployments either when not in production
     # OR when ALLOW_VERCEL_PREVIEWS=true is explicitly set (useful for Render+Vercel stacks).
