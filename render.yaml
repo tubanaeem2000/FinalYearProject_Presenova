@@ -5,7 +5,15 @@ services:
     region: oregon
     plan: free
     buildCommand: "pip install -r requirements.txt && python -m spacy download en_core_web_sm"
-    startCommand: "gunicorn -k gthread --threads 8 -w 1 --bind 0.0.0.0:$PORT main:app"
+    # FIX: gthread never runs eventlet.monkey_patch(), but SocketIO() uses
+    # async_mode='eventlet' (main.py) since eventlet is installed. That
+    # mismatch broke WebSocket upgrades and made emit() from within event
+    # handlers unreliable — confirmed by direct testing against the live
+    # backend (python-socketio client: WS connection failed outright;
+    # start_session emitted over polling connected but never got a
+    # session_started response back). The eventlet worker class makes
+    # gunicorn's actual runtime match what SocketIO expects.
+    startCommand: "gunicorn -k eventlet -w 1 --bind 0.0.0.0:$PORT main:app"
     envVars:
       - key: FLASK_ENV
         value: production

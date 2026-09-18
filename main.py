@@ -36,7 +36,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Global SocketIO instance
-socketio = SocketIO()
+# FIX: explicit async_mode='eventlet' instead of relying on auto-detection.
+# eventlet is installed (requirements.txt), so Flask-SocketIO was already
+# auto-selecting it — but the gunicorn Start Command used the plain
+# gthread worker class, which never calls eventlet.monkey_patch(). That
+# mismatch (SocketIO internals assuming an eventlet-patched environment
+# while gunicorn actually ran plain OS threads) broke WebSocket upgrades
+# entirely and made emit() calls from inside event handlers unreliable in
+# production, while working fine locally where `python main.py` uses
+# socketio.run() (which serves via eventlet directly, no gunicorn
+# involved). The gunicorn worker class must be `eventlet` in production
+# (see Procfile / render.yaml) for this to actually match at runtime.
+socketio = SocketIO(async_mode='eventlet')
 
 # Import blueprints
 from auth import auth_bp, register_jwt_error_handlers, signup, login, firebase_login, get_current_user, refresh

@@ -195,16 +195,37 @@ def evaluate_7cs(text: str, module_type: str, context_metrics: dict) -> dict:
                 "Concrete": max(20, overall_score - 8),
                 "Consistent": max(20, overall_score - 14)
             }
+            # FIX: these were nested f-strings reusing the outer f-string's
+            # quote character (e.g. f"...{'...' if x else f'...{"..." }'}...").
+            # Python 3.12 (PEP 701) allows this; Python 3.11 (what Render
+            # actually runs) raises "f-string: unterminated string" — this
+            # silently broke every Document Analyzer request in production
+            # while working fine in local dev. Precomputing each branch as a
+            # plain variable avoids nested-quote issues entirely and is
+            # correct on any Python version. Also fixes a real bug: the
+            # action-2 string below was missing its f-prefix, so
+            # "{filler_count}" was never actually interpolated.
+            if grammar_issues:
+                grammar_summary_line = (
+                    f"{len(grammar_issues)} grammar issue(s) were flagged. "
+                    f"Key areas: {grammar_summary_text[:200] if grammar_summary_text else 'See detailed grammar report.'}"
+                )
+            else:
+                grammar_summary_line = "No significant grammar issues detected."
+            action_2 = (
+                f"Reduce the {filler_count} detected informal expressions to maintain professional register."
+                if filler_count > 0 else "Maintain the professional register throughout all slides."
+            )
             detailed_feedback = (
                 f"STRUCTURE ASSESSMENT: This presentation scored {overall_score}/100. "
                 f"It contains {word_count} words across an estimated {max(1, sentence_count // 5)} slides, "
                 f"which is {'below the recommended 200+ words for a complete deck' if word_count < 200 else 'within acceptable range'}. "
                 f"The content appears {structure_adj} with {'clear sectioning evident' if has_structure else 'no clear slide or section markers detected'}.\n\n"
                 f"LANGUAGE QUALITY: Grammar score is {computed_grammar_score}/100 (Grade {_grammar_grade(computed_grammar_score)}). "
-                f"{'No significant grammar issues detected.' if not grammar_issues else f'{len(grammar_issues)} grammar issue(s) were flagged. Key areas: {grammar_summary_text[:200] if grammar_summary_text else "See detailed grammar report."}'}. "
+                f"{grammar_summary_line}. "
                 f"Sentence length variety is rated {sentence_variety_score}/100 — aim for a mix of short (under 10 words) and developed (15–25 words) sentences.\n\n"
                 f"TOP 3 PRIORITY ACTIONS: (1) {'Add clear slide-by-slide structure with titled sections.' if not has_structure else 'Deepen the content with domain-specific evidence and data.'}  "
-                f"(2) {'Reduce the {filler_count} detected informal expressions to maintain professional register.' if filler_count > 0 else 'Maintain the professional register throughout all slides.'}  "
+                f"(2) {action_2}  "
                 f"(3) {'Improve grammar quality — address the flagged issues before presenting.' if computed_grammar_score < 70 else 'Strengthen your call-to-action slide with a concrete next step or decision request.'}"
             )
         else:
@@ -237,13 +258,22 @@ def evaluate_7cs(text: str, module_type: str, context_metrics: dict) -> dict:
                 "Concrete": min(100, overall_score + 1),
                 "Consistent": min(100, overall_score + 2)
             }
+            # FIX: same nested-f-string-with-reused-quotes issue as the
+            # branch above (Python 3.11-incompatible, silently broke prod).
+            if grammar_issues:
+                grammar_summary_line = (
+                    f"{len(grammar_issues)} minor grammar issue(s) were flagged: "
+                    f"{grammar_summary_text[:150] if grammar_summary_text else 'Review the grammar report.'}"
+                )
+            else:
+                grammar_summary_line = "No grammar issues detected — excellent writing quality."
             detailed_feedback = (
                 f"STRUCTURE ASSESSMENT: This presentation scored {overall_score}/100 overall. "
                 f"It contains {word_count} words across an estimated {max(1, sentence_count // 5)} slides — "
                 f"{'a thorough and comprehensive deck' if word_count > 400 else 'a solid foundation'}. "
                 f"The content is {structure_adj}, {'with recognizable section markers and clear slide flow' if has_structure else 'with room to strengthen the slide-by-slide organization'}.\n\n"
                 f"LANGUAGE QUALITY: Grammar score is {computed_grammar_score}/100 (Grade {_grammar_grade(computed_grammar_score)}). "
-                f"{'No grammar issues detected — excellent writing quality.' if not grammar_issues else f'{len(grammar_issues)} minor grammar issue(s) were flagged: {grammar_summary_text[:150] if grammar_summary_text else "Review the grammar report."}'}. "
+                f"{grammar_summary_line}. "
                 f"Sentence variety is {variety_adj} ({sentence_variety_score}/100), which {'helps' if sentence_variety_score >= 40 else 'could be improved to better'} maintain audience engagement.\n\n"
                 f"TOP 3 PRIORITY ACTIONS: "
                 f"(1) {'Fix the ' + str(len(grammar_issues)) + ' flagged grammar issue(s) before your final presentation.' if grammar_issues else 'Run a final proofreading pass to catch any late-stage edits.'}  "

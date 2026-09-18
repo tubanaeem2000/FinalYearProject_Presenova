@@ -56,7 +56,17 @@ export const useLiveSession = ({ userId, videoRef }: UseLiveSessionProps) => {
       (apiBase.startsWith('http') ? apiBase.replace(/\/api\/?$/, '') : window.location.origin);
 
     const socket = io(`${socketHost}/ws/live-session`, {
-      transports: ['websocket', 'polling'],
+      // FIX: was ['websocket', 'polling'] — forcing websocket as the first
+      // *initial* connection attempt (not just preferred upgrade target)
+      // means if that attempt fails, socket.io-client raises a connection
+      // error instead of falling back, rather than Engine.IO's normal
+      // "connect via polling, then opportunistically upgrade" behavior.
+      // Verified directly against the live backend: with transports
+      // forced to websocket-first, the connection failed outright; with
+      // polling-first (Engine.IO's actual default order), it connects
+      // reliably. Keeping 'websocket' second still allows the upgrade
+      // once connected.
+      transports: ['polling', 'websocket'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
